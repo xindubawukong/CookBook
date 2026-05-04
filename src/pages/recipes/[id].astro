@@ -1,0 +1,64 @@
+---
+import { getCollection, render } from "astro:content";
+import "../../styles/site.css";
+
+export async function getStaticPaths() {
+  const recipes = await getCollection("recipes");
+  return recipes.map((recipe) => ({
+    params: { id: recipe.id },
+    props: { recipe }
+  }));
+}
+
+const { recipe } = Astro.props;
+const { Content } = await render(recipe);
+const withBase = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={recipe.data.summary ?? `${recipe.data.title} 的做法`} />
+    <title>{recipe.data.title} · 我的厨房手札</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="site-brand" href={withBase("/")}>我的厨房手札</a>
+      <nav class="site-nav" aria-label="主导航">
+        <a href={withBase("/")}>全部菜谱</a>
+      </nav>
+    </header>
+
+    <main class="recipe-page">
+      <a class="back-link" href={withBase("/")}>返回全部菜谱</a>
+
+      <article class="recipe-detail">
+        <header class="recipe-hero">
+          <div class="recipe-hero__image-wrap">
+            <img src={withBase(recipe.data.image)} alt={recipe.data.title} class="recipe-hero__image" />
+          </div>
+          <div class="recipe-hero__content">
+            <div class="recipe-hero__tags">
+              {recipe.data.tags.map((tag) => <span>{tag}</span>)}
+            </div>
+            <h1>{recipe.data.title}</h1>
+            {recipe.data.summary && <p>{recipe.data.summary}</p>}
+            <dl class="recipe-facts">
+              {recipe.data.time && <div><dt>耗时</dt><dd>{recipe.data.time}</dd></div>}
+              {recipe.data.difficulty && <div><dt>难度</dt><dd>{recipe.data.difficulty}</dd></div>}
+              {recipe.data.servings && <div><dt>份量</dt><dd>{recipe.data.servings}</dd></div>}
+            </dl>
+          </div>
+        </header>
+
+        <div class="recipe-content">
+          <Content />
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">慢慢做，慢慢记。</footer>
+  </body>
+</html>
